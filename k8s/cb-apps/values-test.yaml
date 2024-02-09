@@ -1,0 +1,45 @@
+replicaCount: 2
+cbEnvionment: test
+
+
+ingress:
+  hosts:
+    - host: api-v2-test.careerboosts.com
+      paths:
+      - path: /cb-sr(/|$)(.*)
+        backend:
+          serviceName: cb-smart-recruitment-backend-svc
+          servicePort: 8080
+  tls:
+  - secretName: tlscert
+    hosts:
+    - api-v2-test.careerboosts.com
+
+app:
+  webAppHost: sr-portal-v2-test.careerboosts.com
+  keycloak:
+    host: auth-b2c-test.careerboosts.com
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.azure.com/scalesetpriority
+          operator: In
+          values:
+          - spot
+
+tolerations:
+  - effect: NoSchedule
+    key: kubernetes.azure.com/scalesetpriority
+    operator: Equal
+    value: spot

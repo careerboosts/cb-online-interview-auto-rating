@@ -1,0 +1,150 @@
+{{- if .Values.ingress.enabled -}}
+{{- $fullName := include "cb-apps.fullname" . -}}
+{{- $svcPort := .Values.service.port -}}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ include "cb-apps.fullname" . }}
+spec:
+  gateways:
+  - istio-system/cb-api-gateway
+  hosts:
+  {{- range .Values.ingress.hosts }}
+  - {{ .host | quote }}
+  {{- end }}
+  http:
+  - corsPolicy:
+      allowHeaders:
+      - '*'
+      allowMethods:
+      - POST
+      - GET
+      allowOrigins:
+      - exact: https://{{ .Values.app.webAppHost }}
+    match:
+    - uri:
+        prefix: /cb-sr/manager
+    name: {{ include "cb-apps.fullname" . }}
+    rewrite:
+      uri: /manager
+    route:
+    - destination:
+        host: {{ include "cb-apps.fullname" . }}
+        port:
+          number: 8080
+  - corsPolicy:
+      allowHeaders:
+      - '*'
+      allowMethods:
+      - POST
+      - GET
+      allowOrigins:
+      - exact: https://{{ .Values.app.webAppHost }}
+    match:
+    - uri:
+        prefix: /cb-sr/candidate
+    name: {{ include "cb-apps.fullname" . }}
+    rewrite:
+      uri: /candidate
+    route:
+    - destination:
+        host: {{ include "cb-apps.fullname" . }}
+        port:
+          number: 8080
+  - corsPolicy:
+      allowHeaders:
+      - '*'
+      allowMethods:
+      - POST
+      - GET
+      allowOrigins:
+      - exact: https://{{ .Values.app.webAppHost }}
+    match:
+    - uri:
+        prefix: /cb-sr/employee
+    name: {{ include "cb-apps.fullname" . }}
+    rewrite:
+      uri: /employee
+    route:
+    - destination:
+        host: {{ include "cb-apps.fullname" . }}
+        port:
+          number: 8080
+  - corsPolicy:
+      allowHeaders:
+      - '*'
+      allowMethods:
+      - POST
+      - GET
+      allowOrigins:
+      - exact: https://{{ .Values.app.webAppHost }}
+    match:
+    - uri:
+        prefix: /cb-sr/recruiter
+    name: {{ include "cb-apps.fullname" . }}
+    rewrite:
+      uri: /recruiter
+    route:
+    - destination:
+        host: {{ include "cb-apps.fullname" . }}
+        port:
+          number: 8080
+  - corsPolicy:
+      allowHeaders:
+      - '*'
+      allowMethods:
+      - POST
+      - GET
+      allowOrigins:
+      - exact: https://{{ .Values.app.webAppHost }}
+    match:
+    - uri:
+        prefix: /cb-sr/proctoring
+    name: {{ include "cb-apps.fullname" . }}
+    rewrite:
+      uri: /proctoring
+    route:
+    - destination:
+        host: {{ include "cb-apps.fullname" . }}
+        port:
+          number: 8080
+  - corsPolicy:
+      allowHeaders:
+      - '*'
+      allowMethods:
+      - POST
+      - GET
+      allowOrigins:
+      - exact: https://{{ .Values.app.webAppHost }}
+    match:
+    - uri:
+        prefix: /cb-sr/wh
+    name: {{ include "cb-apps.fullname" . }}
+    rewrite:
+      uri: /wh
+    route:
+    - destination:
+        host: {{ include "cb-apps.fullname" . }}
+        port:
+          number: 8080
+  - corsPolicy:
+      allowHeaders:
+      - '*'
+      allowMethods:
+      - POST
+      - GET
+      allowOrigins:
+      - exact: https://{{ .Values.app.webAppHost }}
+    match:
+    - uri:
+        prefix: /cb-sr/register
+    name: {{ include "cb-apps.fullname" . }}
+    rewrite:
+      uri: /register
+    route:
+    - destination:
+        host: {{ include "cb-apps.fullname" . }}
+        port:
+          number: 8080
+ 
+{{- end }}

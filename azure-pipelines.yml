@@ -1,0 +1,25 @@
+# Docker
+# Build and push an image to Azure Container Registry
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- azure-pipelines
+
+
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: cb-smart-recruitment/pipeline-archetypes
+      ref: main
+
+stages:
+- template: .\docker\build_deploy_dev.yaml@templates
+  parameters:
+    projectName: "cb-smart-recruitment-v2"
+    serviceName: 'cb-smart-recruitment-backend'
+    dockerRegistryServiceConnection: '9deb3f80-1742-4bf6-bb99-54cc647047a7'
+    imageRepository: 'cb-smart-recruitment-backend'
+    containerRegistry: 'cbopscommondev.azurecr.io'
+    dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+    imageTag: '$(Build.BuildId)'

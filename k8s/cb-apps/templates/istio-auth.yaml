@@ -1,0 +1,142 @@
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: {{ include "cb-apps.fullname" . }}-deny-no-jwt
+spec:
+  selector:
+    matchLabels:
+      {{- include "cb-apps.selectorLabels" . | nindent 6 }}
+  action: DENY
+  rules:
+  - from:
+    - source:
+        notRequestPrincipals: ["*"]
+    to:
+    - operation:
+        notPaths:
+        - /wh/*
+        - /register/*
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: {{ include "cb-apps.fullname" . }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "cb-apps.selectorLabels" . | nindent 6 }}
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        requestPrincipals:
+        - "https://{{ .Values.app.keycloak.host }}/realms/{{ .Values.app.keycloak.realm }}/*"
+    to:
+    - operation:
+        methods:
+        - GET
+        - POST
+        paths:
+        - /manager*
+    when:
+    - key: request.auth.claims[groups]
+      values:
+      - /manager
+  - from:
+    - source:
+        requestPrincipals:
+        - "https://{{ .Values.app.keycloak.host }}/realms/{{ .Values.app.keycloak.realm }}/*"
+    to:
+    - operation:
+        methods:
+        - GET
+        - POST
+        paths:
+        - /proctoring*
+    when:
+    - key: request.auth.claims[groups]
+      values:
+      - /candidate
+      - /employee
+  - from:
+    - source:
+        requestPrincipals:
+        - "https://{{ .Values.app.keycloak.host }}/realms/{{ .Values.app.keycloak.realm }}/*"
+    to:
+    - operation:
+        methods:
+        - GET
+        - POST
+        paths:
+        - /candidate*
+    when:
+    - key: request.auth.claims[groups]
+      values:
+      - /candidate
+  - from:
+    - source:
+        requestPrincipals:
+        - "https://{{ .Values.app.keycloak.host }}/realms/{{ .Values.app.keycloak.realm }}/*"
+    to:
+    - operation:
+        methods:
+        - GET
+        - POST
+        paths:
+        - /recruiter*
+    when:
+    - key: request.auth.claims[groups]
+      values:
+      - /recruiter
+
+  - from:
+    - source:
+        requestPrincipals:
+        - "https://{{ .Values.app.keycloak.host }}/realms/{{ .Values.app.keycloak.realm }}/*"
+    to:
+    - operation:
+        methods:
+        - GET
+        - POST
+        paths:
+        - /employee*
+    when:
+    - key: request.auth.claims[groups]
+      values:
+      - /employee
+      - /manager
+      
+  - to:
+      - operation:
+          methods:
+          - POST
+          paths:
+          - /register/*
+
+  - to:
+      - operation:
+          methods:
+          - POST
+          paths:
+          - /wh/*
+    when:
+    - key: request.headers[x-classmarker-hmac-sha256]
+      values:
+      - "*"
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: {{ include "cb-apps.fullname" . }}
+spec:
+  selector:
+     matchLabels:
+       {{- include "cb-apps.selectorLabels" . | nindent 6 }}
+  jwtRules:
+  - issuer: "https://{{ .Values.app.keycloak.host }}/realms/{{ .Values.app.keycloak.realm }}"
+    jwksUri: "http://keycloak.tools.svc.cluster.local/realms/{{ .Values.app.keycloak.realm }}/protocol/openid-connect/certs"
+    forwardOriginalToken: false
+    outputPayloadToHeader: user_data

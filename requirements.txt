@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+praat-parselmouth
+numpy
+noisereduce
+moviepy
+torch
+python-multipart
+azure-storage-blob
+jwt
+orjson
+bson
+pymongo
