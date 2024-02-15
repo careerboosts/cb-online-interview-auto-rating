@@ -126,7 +126,7 @@ async def analyze_pitch_endpoint(user_id: str = Form(...), file : UploadFile = F
     available_criteria_count = 3
     positive_criteria_count = (1 if pitch_result == "Balanced" else 0) + \
                               (1 if volume_result == "Volume is ideal" else 0) + \
-                              (1 if silence_result == "normal" else 0)
+                              (1 if silence_result == "Normal" else 0)
 
     overall_score = calculate_score(positive_criteria_count, available_criteria_count)
 
