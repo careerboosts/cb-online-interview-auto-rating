@@ -93,13 +93,13 @@ def classify_silences(silences, total_duration_threshold=15, initial_delay_thres
 
 
     if longest_silence >= long_silence_threshold:
-        return "silence too long"
+        return "Silence too long"
     if total_silence_duration > total_duration_threshold:
-        return "too much silence"
+        return "Too much silence"
     if initial_delay >= initial_delay_threshold:
-        return "delay"
+        return "Delay"
     else:
-        return "normal"
+        return "Normal"
 
 
 def calculate_score(positive_criteria_count, available_criteria_count):
@@ -186,7 +186,7 @@ async def analyze_video_pitch(user_id: str = Form(...), file: UploadFile = File(
             "pitch": pitch_result,
             "volume": volume_result,
             "silence": silence_result,
-            "OverallScore": overall_score
+            "OverallScore": round(overall_score)
         }
 
         update_result = Scores_collection.update_one(
