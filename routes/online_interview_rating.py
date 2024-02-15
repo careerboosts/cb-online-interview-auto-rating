@@ -10,7 +10,6 @@ from bson import ObjectId
 from models.Candidate import ResponseModel_post
 from database.database import *
 
-from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -145,18 +144,20 @@ async def analyze_pitch_endpoint(user_id: str = Form(...), file : UploadFile = F
     )        
     return ResponseModel_post(data, "candidate autorating saved successfully")
 
-@router.post("/analyze_video")
-async def analyze_video_pitch(user_id: str = Form(...), file: UploadFile = File(...)):
+
+@router.post("/analyze_video")  
+async def analyze_video_pitch(user_id: str = Form(...), file: UploadFile = File(...) , question_id : str = Form(...)):
     # Initialize paths to ensure they are in scope for cleanup
     video_file_path = None
     audio_file_path = None
 
     try:
         # Writing video to a temp file
+        # Reading video to a temp file and processing
         with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as video_file:
-            video_file.write(await file.read())
+            contents = await file.read()
+            video_file.write(contents)
             video_file_path = video_file.name
-
         # Processing video file to extract audio
         video_clip = VideoFileClip(video_file_path)
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as audio_file:
@@ -178,20 +179,27 @@ async def analyze_video_pitch(user_id: str = Form(...), file: UploadFile = File(
         available_criteria_count = 3
         positive_criteria_count = (1 if pitch_result == "Balanced" else 0) + \
                                   (1 if volume_result == "Volume is ideal" else 0) + \
-                                  (1 if silence_result == "normal" else 0)
+                                  (1 if silence_result == "Normal" else 0)
         overall_score = calculate_score(positive_criteria_count, available_criteria_count)
 
         data = {
-            "pitch_characteristic": pitch_result,
-            "volume_characteristic": volume_result,
-            "silence_characteristic": silence_result,
-            "overall_score": overall_score
+            "pitch": pitch_result,
+            "volume": volume_result,
+            "silence": silence_result,
+            "OverallScore": overall_score
         }
 
-        # Update the database
-        Scores_collection.update_one(
-            {"scoreUserId": ObjectId(user_id), "scoreAssessmentIsInterview": True},
-            {"$set": {"scoreOnlineInterview": data}}
+        update_result = Scores_collection.update_one(
+        {     "scoreUserId": ObjectId(user_id), "scoreAssessmentIsInterview": True,
+
+            "scoreCompetenciesScores.competencyQuestionScores.questionId": ObjectId(question_id)
+        },
+        {
+            "$set": {
+                "scoreCompetenciesScores.$[].competencyQuestionScores.$[question].questionVideoRating": data
+            }
+        },
+        array_filters=[{"question.questionId": ObjectId(question_id)}]
         )
 
     finally:
@@ -202,5 +210,3 @@ async def analyze_video_pitch(user_id: str = Form(...), file: UploadFile = File(
             os.unlink(audio_file_path)
 
     return ResponseModel_post(data, "candidate autorating saved successfully")
-
-# Ensure the ResponseModel_post function is correctly defined to accept the parameters as used here
